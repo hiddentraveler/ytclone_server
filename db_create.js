@@ -38,7 +38,7 @@ async function getData([
 
 function createRandomUser() {
   return [
-    faker.string.uuid(),
+    faker.string.nanoid(10),
     faker.image.avatarLegacy(),
     faker.date.birthdate(),
     faker.internet.email(),
@@ -57,28 +57,96 @@ function createRandomUser() {
 // }
 //
 // await generateData(1000);
-export async function getUsers() {
+
+export async function getComments(vidId) {
   let conn;
   conn = await pool.getConnection();
-  const res = await conn.query("SELECT * FROM user");
+  const res = await conn.query(`SELECT * FROM comments where vidId='${vidId}'`);
+  conn.end();
+  console.log("get comment:", res);
+  console.log("vidId", vidId);
   return res;
 }
 
-export async function setVideo(videoUrl, lessonId) {
+export async function createComment(comment, vidId, commentId) {
   let conn;
   conn = await pool.getConnection();
   const res = await conn.query(
-    "INSERT INTO video (vidId, title, descp, channelId, channelName, uploadTime, videoUrl) VALUES (?,?,?,?,?,?,?)",
-    [lessonId, , faker.lorem.lines({ min: 1, max: 3 }), , , , videoUrl],
+    "INSERT INTO comments (comment,vidId,commentId) VALUES (?,?,?)",
+    [comment, vidId, commentId],
+  );
+  conn.end();
+  console.log(res);
+  return res;
+}
+
+export async function getUsers(email_id, pass) {
+  let conn;
+  conn = await pool.getConnection();
+  const res = await conn.query(`SELECT * FROM users where email='${email_id}'`);
+  conn.end();
+  console.log(email_id, pass, res[0]);
+  if (!res[0]) {
+    return { msg: "email does not exist", error: 1 };
+  } else if (res[0].pass !== pass) {
+    return { msg: "password does not match", error: 1 };
+  } else {
+    const { avatar, email, username, id } = res[0];
+    return { avatar, email, username, id, error: 0 };
+  }
+}
+
+export async function home() {
+  let conn;
+  conn = await pool.getConnection();
+  const res = await conn.query("SELECT * FROM video");
+  conn.end();
+  return res;
+}
+
+export async function setVideo(
+  videoUrl,
+  vidId,
+  title,
+  descp,
+  userid,
+  username,
+  uploadTime,
+  thumbnail,
+) {
+  let conn;
+  conn = await pool.getConnection();
+  const res = await conn.query(
+    "INSERT INTO video (videoUrl,vidId,title,descp,userid,username,uploadTime,thumbnail) VALUES (?,?,?,?,?,?,?,?)",
+    [videoUrl, vidId, title, descp, userid, username, uploadTime, thumbnail],
   );
   conn.end();
   return res;
 }
 
-export async function addUsers() {
+export async function addUsers(email, pass) {
   let conn;
   conn = await pool.getConnection();
-  const res = await conn.query("INSERT INTO user ()");
-  conn.end();
-  return res;
+  const username = faker.internet.userName();
+  const avatar = faker.image.avatarLegacy();
+  const id = faker.string.nanoid(10);
+  try {
+    const result = await conn.query(
+      "INSERT INTO users (id,avatar,email,pass,username) VALUES (?,?,?,?,?)",
+      [id, avatar, email, pass, username],
+    );
+    console.log("in db_create", result);
+    return 0;
+  } catch (e) {
+    console.log("error in db_create:", e.errno);
+    switch (e.errno) {
+      case 1062:
+        return 1062;
+      case 1048:
+        return 1048;
+    }
+    return "error in inserting the data";
+  } finally {
+    conn.end();
+  }
 }
