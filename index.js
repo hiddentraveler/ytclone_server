@@ -66,12 +66,12 @@ app.post("/comments", async function (req, res) {
   res.json(result);
 });
 
-app.patch("/comments", async function (req, res) {
+app.post("/addcomment", async function (req, res) {
   const vidId = req.body.vidId;
   const comment = req.body.comment;
   const commentId = faker.string.uuid();
   const result = await createComment(comment, vidId, commentId);
-  res.json(result);
+  res.json(JSON.stringify(result));
 });
 // get all users
 // app.get("/users", async function (req, res) {

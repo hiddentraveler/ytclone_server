@@ -70,14 +70,19 @@ export async function getComments(vidId) {
 
 export async function createComment(comment, vidId, commentId) {
   let conn;
-  conn = await pool.getConnection();
-  const res = await conn.query(
-    "INSERT INTO comments (comment,vidId,commentId) VALUES (?,?,?)",
-    [comment, vidId, commentId],
-  );
-  conn.end();
-  console.log(res);
-  return res;
+  try {
+    conn = await pool.getConnection();
+    const res = await conn.query(
+      "INSERT INTO comments (comment,vidId,commentId) VALUES (?,?,?)",
+      [comment, vidId, commentId],
+    );
+    conn.end();
+    console.log(res);
+    return "comment added";
+  } catch (e) {
+    console.log(e);
+    return "error in creating comment";
+  }
 }
 
 export async function getUsers(email_id, pass) {
